@@ -1,11 +1,10 @@
-using System.Data;
-using GameStore.Entities;
-
 namespace GameStore.Repositories;
 
-public class InMemRepository
+using GameStore.Entities;
+
+public class InMemRepository : IGameRepository
 {
-    readonly List<Game> games = new List<Game>
+    private readonly List<Game> games = new List<Game>
     {
         new Game
         {

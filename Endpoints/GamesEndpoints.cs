@@ -2,45 +2,37 @@ namespace GameStore.Endpoints;
 
 using GameStore.Entities;
 using GameStore.Repositories;
-using Microsoft.VisualBasic;
 
 public static class GamesEndpoints
 {
-    /*
-        Repository Pattern Summary:
-    
-        The Repository Pattern is used to separate the data access logic from the application logic.
-        Instead of letting endpoints or services directly access the database or in-memory collections,
-        we encapsulate all CRUD operations inside a repository.
-    
-        Benefits:
-        - Encapsulation: Application logic no longer depends on the data source directly.
-        - Abstraction: Allows switching databases (SQL Server, Cosmos DB, etc.) without changing endpoints.
-        - Testability: Repositories can be mocked for unit testing.
-        - Separation of Concerns: Keeps the API endpoints focused only on request/response handling.
-    
-        In this project:
-        - Endpoints now call repository methods (e.g., GetAllGames, CreateGame, UpdateGame).
-        - The underlying data store (currently in-memory) is hidden from the rest of the app.
-        - Future migrations to a database will not require rewriting the endpoints,
-          only a new repository implementation.
-    */
-
-    public static RouteGroupBuilder MapGamesEndpoints(this IEndpointRouteBuilder routes) //we use this method in the program.cs: there the 'routes' is app.
+    public static RouteGroupBuilder MapGamesEndpoints(this IEndpointRouteBuilder routes) // Called from Program.cs as app.MapGamesEndpoints()
     {
         var GamesGroup = routes.MapGroup("/games").WithParameterValidation();
-        var mem_repo = new InMemRepository();
-        GamesGroup.MapGet("/", () => mem_repo.GetAllGames()).WithName("GETALLGAMES");
+
+        //  Dependency Injection in action:
+        // We're no longer manually instantiating the repository (e.g., new InMemRepository()).
+        // Instead, we declare the interface (IGameRepository) as a parameter in the route handler method.
+        // ASP.NET Core's built-in DI system automatically injects the concrete class (e.g., InMemRepository),
+        // based on the mapping we registered in Program.cs:
+        //
+        // builder.Services.AddScoped<IGameRepository, InMemRepository>();
+        //
+        // This means: whenever the app sees a request for IGameRepository, it creates and injects an instance of InMemRepository.
+        // This allows for loose coupling and makes it easy to switch to a different implementation later without modifying endpoint logic.
+
+        GamesGroup
+            .MapGet("/", (IGameRepository _Igame_repo) => _Igame_repo.GetAllGames())
+            .WithName("GETALLGAMES");
 
         GamesGroup
             .MapGet(
                 "/{id}",
-                (int id) =>
+                (int id, IGameRepository _Igame_repo) =>
                 {
-                    var x = mem_repo.GetSpecificGame(id);
+                    var x = _Igame_repo.GetSpecificGame(id);
                     return x is null
                         ? Results.NotFound(new { message = $"Game {id} not found." })
-                        : Results.Ok();
+                        : Results.Ok(x);
                 }
             )
             .WithName("GETGameBYID");
@@ -48,9 +40,9 @@ public static class GamesEndpoints
         GamesGroup
             .MapPost(
                 "",
-                (Game game) =>
+                (Game game, IGameRepository _Igame_repo) =>
                 {
-                    mem_repo.CreateGame(game);
+                    _Igame_repo.CreateGame(game);
                     return Results.CreatedAtRoute("GETGameBYID", new { id = game.Id }, game);
                 }
             )
@@ -58,9 +50,9 @@ public static class GamesEndpoints
 
         GamesGroup.MapPut(
             "/{id}",
-            (int id, Game newgame) =>
+            (int id, Game newgame, IGameRepository _Igame_repo) =>
             {
-                var game = mem_repo.UpdateGame(id, newgame);
+                var game = _Igame_repo.UpdateGame(id, newgame);
                 if (game == null)
                 {
                     return Results.NotFound();
@@ -71,10 +63,10 @@ public static class GamesEndpoints
 
         GamesGroup.MapDelete(
             "/{id}",
-            (int id) =>
+            (int id, IGameRepository _Igame_repo) =>
             {
-                mem_repo.DeleteGame(id);
-                Results.NoContent();
+                _Igame_repo.DeleteGame(id);
+                return Results.NoContent();
             }
         );
 
