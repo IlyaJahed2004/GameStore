@@ -1,5 +1,6 @@
 namespace GameStore.Endpoints;
 
+using GamesStore.Dtos;
 using GameStore.Entities;
 using GameStore.Repositories;
 
@@ -9,19 +10,12 @@ public static class GamesEndpoints
     {
         var GamesGroup = routes.MapGroup("/games").WithParameterValidation();
 
-        //  Dependency Injection in action:
-        // We're no longer manually instantiating the repository (e.g., new InMemRepository()).
-        // Instead, we declare the interface (IGameRepository) as a parameter in the route handler method.
-        // ASP.NET Core's built-in DI system automatically injects the concrete class (e.g., InMemRepository),
-        // based on the mapping we registered in Program.cs:
-        //
-        // builder.Services.AddScoped<IGameRepository, InMemRepository>();
-        //
-        // This means: whenever the app sees a request for IGameRepository, it creates and injects an instance of InMemRepository.
-        // This allows for loose coupling and makes it easy to switch to a different implementation later without modifying endpoint logic.
-
         GamesGroup
-            .MapGet("/", (IGameRepository _Igame_repo) => _Igame_repo.GetAllGames())
+            .MapGet(
+                "/",
+                (IGameRepository _Igame_repo) =>
+                    _Igame_repo.GetAllGames().Select(game => game.AsDto())
+            )
             .WithName("GETALLGAMES");
 
         GamesGroup
@@ -32,7 +26,7 @@ public static class GamesEndpoints
                     var x = _Igame_repo.GetSpecificGame(id);
                     return x is null
                         ? Results.NotFound(new { message = $"Game {id} not found." })
-                        : Results.Ok(x);
+                        : Results.Ok(x.AsDto());
                 }
             )
             .WithName("GETGameBYID");
@@ -40,8 +34,16 @@ public static class GamesEndpoints
         GamesGroup
             .MapPost(
                 "",
-                (Game game, IGameRepository _Igame_repo) =>
+                (CreateGameDto game_dto, IGameRepository _Igame_repo) => //we are client and we post gamedto not a game actually.so we should convert it to a game and add to the database.
                 {
+                    Game game = new Game()
+                    {
+                        Name = game_dto.Name,
+                        Genre = game_dto.Genre,
+                        Price = game_dto.Price,
+                        ReleaseDate = game_dto.ReleaseDate,
+                        imageuri = game_dto.imageuri,
+                    };
                     _Igame_repo.CreateGame(game);
                     return Results.CreatedAtRoute("GETGameBYID", new { id = game.Id }, game);
                 }
@@ -50,9 +52,17 @@ public static class GamesEndpoints
 
         GamesGroup.MapPut(
             "/{id}",
-            (int id, Game newgame, IGameRepository _Igame_repo) =>
+            (int id, UpdateGameDto updatedgame_dto, IGameRepository _Igame_repo) =>
             {
-                var game = _Igame_repo.UpdateGame(id, newgame);
+                Game updated_game = new()
+                {
+                    Name = updatedgame_dto.Name,
+                    Genre = updatedgame_dto.Genre,
+                    Price = updatedgame_dto.Price,
+                    ReleaseDate = updatedgame_dto.ReleaseDate,
+                    imageuri = updatedgame_dto.imageuri,
+                };
+                var game = _Igame_repo.UpdateGame(id, updated_game);
                 if (game == null)
                 {
                     return Results.NotFound();
