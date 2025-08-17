@@ -16,13 +16,14 @@ mcr.microsoft.com/mssql/server:2022-latest  # Official SQL Server 2022 image
 
 
 #one line command: 
-docker run \
--e "ACCEPT_EULA=Y" \
--e "MSSQL_SA_PASSWORD=$sa_password" \
--p 15500:1433 \
--v sqlvolume:/var/opt/mssql \
--d --rm --name mssql \
+docker run `
+-e "ACCEPT_EULA=Y" `
+-e "MSSQL_SA_PASSWORD=$sa_password" `
+-p 15500:1433 `
+-v sqlvolume:/var/opt/mssql `
+-d --rm --name mssql `
 mcr.microsoft.com/mssql/server:2022-latest
+
 
 
 ```

@@ -4,23 +4,8 @@ using GameStore.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ⚠ EF Core Notes:
-// 1. MaxLength / Required attributes:
-//    - EF Core automatically applies [MaxLength] and [Required] in migrations,
-//      so Name, Genre, imageuri columns are correctly set in the database.
-// 2. Decimal Precision Warning (e.g., Price):
-//    - EF Core cannot infer exact precision/scale from [Range] or decimal type.
-//    - To remove the warning, explicitly configure it in the database:
-//      Approach 1 (recommended): Using IEntityTypeConfiguration<T>:
-//         builder.Property(g => g.Price).HasColumnType("decimal(5,2)");
-//      Approach 2 (alternative): Directly in DbContext's OnModelCreating:
-//         modelBuilder.Entity<Game>()
-//                     .Property(g => g.Price)
-//                     .HasColumnType("decimal(5,2)");
-// 3. OnModelCreating:
-//    - Overriding OnModelCreating does not delete EF Core's default behavior.
-//    - Make sure to call ApplyConfiguration for all IEntityTypeConfiguration classes
-//      you want applied; otherwise, missing configurations won't be applied.
+// time to apply the migration into our sql server instance:
+// the command is this:   dotnet ef database update
 
 
 builder.Services.AddSingleton<IGameRepository, InMemRepository>();

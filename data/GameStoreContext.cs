@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameStore.data;
 
-
-
 // -------------------- Notes on GameStoreContext --------------------
 // - Inherits from DbContext, which is EF Core’s main class for working with a database.
 // - Represents the database used by the app.
