@@ -4,27 +4,23 @@ using GameStore.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-// in this level , we generated the first database migration:
-// we should use these commands:
-// dotnet tool install --global dotnet-ef
-// dotnet add package Microsoft.EntityFrameworkCore.Design
-// dotnet ef migrations add InitialCreate --output-dir Data\Migrations
-
-// EF Core migrations summary:
-// 1. Entity classes (e.g. Game) define the structure of data (columns).
-// 2. DbSet<TEntity> in DbContext (e.g. DbSet<Game> games) tells EF Core
-//    to include that entity in the model → usually becomes a table.
-// 3. The "model" in EF Core = EF’s internal blueprint built from:
-//      - entity classes
-//      - DbSet properties in DbContext
-//      - data annotations and Fluent API configurations
-//    → EF uses this model to know how to generate database tables/columns.
-// 4. `dotnet ef migrations add <Name>` generates a migration file
-//    (C# code with Up/Down methods) based on the model.
-// 5. `dotnet ef database update` applies the migration by running SQL
-//    (e.g. CREATE TABLE games) against the database.
-// → Model = EF’s internal representation; Database = actual tables created from it.
+// ⚠ EF Core Notes:
+// 1. MaxLength / Required attributes:
+//    - EF Core automatically applies [MaxLength] and [Required] in migrations,
+//      so Name, Genre, imageuri columns are correctly set in the database.
+// 2. Decimal Precision Warning (e.g., Price):
+//    - EF Core cannot infer exact precision/scale from [Range] or decimal type.
+//    - To remove the warning, explicitly configure it in the database:
+//      Approach 1 (recommended): Using IEntityTypeConfiguration<T>:
+//         builder.Property(g => g.Price).HasColumnType("decimal(5,2)");
+//      Approach 2 (alternative): Directly in DbContext's OnModelCreating:
+//         modelBuilder.Entity<Game>()
+//                     .Property(g => g.Price)
+//                     .HasColumnType("decimal(5,2)");
+// 3. OnModelCreating:
+//    - Overriding OnModelCreating does not delete EF Core's default behavior.
+//    - Make sure to call ApplyConfiguration for all IEntityTypeConfiguration classes
+//      you want applied; otherwise, missing configurations won't be applied.
 
 
 builder.Services.AddSingleton<IGameRepository, InMemRepository>();

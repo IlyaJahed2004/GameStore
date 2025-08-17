@@ -28,7 +28,12 @@ namespace GamesStore.Data.Migrations
                         maxLength: 20,
                         nullable: false
                     ),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Price = table.Column<decimal>(
+                        type: "decimal(5,2)",
+                        precision: 5,
+                        scale: 2,
+                        nullable: false
+                    ),
                     ReleaseDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     imageuri = table.Column<string>(type: "nvarchar(max)", nullable: false),
                 },

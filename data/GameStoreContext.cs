@@ -1,3 +1,4 @@
+using System.Reflection;
 using GameStore.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,4 +21,9 @@ public class GameStoreContext : DbContext
         : base(options) { }
 
     public DbSet<Game> games => Set<Game>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+    }
 }
