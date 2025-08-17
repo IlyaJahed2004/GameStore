@@ -25,7 +25,6 @@ docker run `
 mcr.microsoft.com/mssql/server:2022-latest
 
 
-
 ```
 
 ## Setting the connection string to secret manager:
